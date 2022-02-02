@@ -1,0 +1,290 @@
+---
+title: "Task2"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(lubridate)
+library(magrittr)
+library(NbClust)
+library(factoextra)
+library(plotly)
+library(cluster)
+library(caret)
+```
+
+
+```{r}
+df=read.csv("E:\\GRAD\\fda\\Project1\\World Indicators.csv",na.strings = "")
+
+df$Energy.Usage=NULL
+df$Lending.Interest=NULL
+colSums(is.na(df))
+library(ggplot2)
+```
+
+
+```{r}
+#Outkier percentage return function
+perc_out=function(a){
+  length(which(a>  mean(a) + 3 * sd(a) | a < mean(a) - 3 * sd(a))  ) / length(a)
+}
+```
+
+
+```{r}
+names(df)
+
+#Cleaning Birth rate
+boxplot(df$ï..Birth.Rate)
+df$ï..Birth.Rate[is.na(df$ï..Birth.Rate)]=mean(df$ï..Birth.Rate,trim=2*perc_out(na.omit(df$ï..Birth.Rate)),na.rm = TRUE)
+ggplot(df, aes(x=ï..Birth.Rate)) +  geom_density()
+df$ï..Birth.Rate=df$ï..Birth.Rate**0.25
+```
+
+
+```{r}
+#cleaning Business.Tax.Rate
+df$Business.Tax.Rate=gsub(pattern="%",replacement="",df$Business.Tax.Rate)
+df$Business.Tax.Rate=as.numeric(df$Business.Tax.Rate)
+boxplot(df$Business.Tax.Rate)
+
+df$Business.Tax.Rate[is.na(df$Business.Tax.Rate)]=mean(df$Business.Tax.Rate,trim=2*perc_out(na.omit(df$Business.Tax.Rate)),na.rm = TRUE)
+ggplot(df, aes(x=Business.Tax.Rate)) +  geom_density()
+df$Business.Tax.Rate=df$Business.Tax.Rate**0.2
+
+```
+
+
+```{r}
+#cleaning Days.to.Start.Business
+
+
+boxplot(df$Days.to.Start.Business)
+df$Days.to.Start.Business[is.na(df$Days.to.Start.Business)]=mean(df$Days.to.Start.Business,trim=2*perc_out(na.omit(df$Days.to.Start.Business)),na.rm = TRUE)
+ggplot(df, aes(x=Days.to.Start.Business)) +  geom_density()
+df$Days.to.Start.Business=df$Days.to.Start.Business**0.2
+
+```
+
+
+```{r}
+#Cleaning GDP
+
+df$GDP=gsub(pattern="[[:punct:]]",replacement="",df$GDP)
+df$GDP=as.numeric(df$GDP)
+boxplot(df$GDP)
+
+df$GDP[is.na(df$GDP)]=mean(df$GDP,trim=2*perc_out(na.omit(df$GDP)),na.rm = TRUE)
+ggplot(df, aes(x=GDP)) +  geom_density()
+df$GDP=df$GDP**0.1
+```
+
+
+```{r}
+#cleaning Health.Exp...GDP
+
+boxplot(df$Health.Exp...GDP)
+df$Health.Exp...GDP[is.na(df$Health.Exp...GDP)]=mean(df$Health.Exp...GDP,trim=2*perc_out(na.omit(df$Health.Exp...GDP)),na.rm = TRUE)
+ggplot(df, aes(x=Health.Exp...GDP)) +  geom_density()
+df$Health.Exp...GDP=df$Health.Exp...GDP**0.8
+
+```
+
+
+```{r}
+#Cleaning Health.Exp.Capita
+
+df$Health.Exp.Capita=gsub(pattern="[[:punct:]]",replacement="",df$Health.Exp.Capita)
+df$Health.Exp.Capita=as.numeric(df$Health.Exp.Capita)
+boxplot(df$Health.Exp.Capita)
+
+df$Health.Exp.Capita[is.na(df$Health.Exp.Capita)]=mean(df$Health.Exp.Capita,trim=2*perc_out(na.omit(df$Health.Exp.Capita)),na.rm = TRUE)
+ggplot(df, aes(x=Health.Exp.Capita)) +  geom_density()
+df$Health.Exp.Capita=df$Health.Exp.Capita**0.2
+```
+
+
+```{r}
+#Cleaning Hours.to.do.Tax
+
+boxplot(df$Hours.to.do.Tax)
+df$Hours.to.do.Tax[is.na(df$Hours.to.do.Tax)]=mean(df$Hours.to.do.Tax,trim=2*perc_out(na.omit(df$Hours.to.do.Tax)),na.rm = TRUE)
+ggplot(df, aes(x=Hours.to.do.Tax)) +  geom_density()
+df$Hours.to.do.Tax=df$Hours.to.do.Tax**0.2
+```
+
+```{r}
+
+boxplot(df$Infant.Mortality.Rate)
+df$Infant.Mortality.Rate[is.na(df$Infant.Mortality.Rate)]=mean(df$Infant.Mortality.Rate,trim=2*perc_out(na.omit(df$Infant.Mortality.Rate)),na.rm = TRUE)
+ggplot(df, aes(x=Infant.Mortality.Rate)) +  geom_density()
+
+df$Infant.Mortality.Rate=df$Infant.Mortality.Rate**0.33
+```
+
+```{r}
+
+boxplot(df$Internet.Usage)
+df$Internet.Usage[is.na(df$Internet.Usage)]=mean(df$Internet.Usage,trim=2*perc_out(na.omit(df$Internet.Usage)),na.rm = TRUE)
+
+ggplot(df, aes(x=Internet.Usage)) +  geom_density()
+
+
+
+
+```
+```{r}
+
+boxplot(df$Life.Expectancy.Female)
+df$Life.Expectancy.Female[is.na(df$Life.Expectancy.Female)]=mean(df$Life.Expectancy.Female,trim=2*perc_out(na.omit(df$Life.Expectancy.Female)),na.rm = TRUE)
+
+ggplot(df, aes(x=Life.Expectancy.Female)) +  geom_density()
+
+df$Life.Expectancy.Female=df$Life.Expectancy.Female**3
+df$Life.Expectancy.Female=df$Life.Expectancy.Female**2
+```
+
+
+```{r}
+
+
+boxplot(df$Life.Expectancy.Male)
+df$Life.Expectancy.Male[is.na(df$Life.Expectancy.Male)]=mean(df$Life.Expectancy.Male,trim=2*perc_out(na.omit(df$Life.Expectancy.Male)),na.rm = TRUE)
+ggplot(df, aes(x=Life.Expectancy.Male)) +  geom_density()
+
+df$Life.Expectancy.Male=df$Life.Expectancy.Male**2
+
+```
+
+```{r}
+
+boxplot(df$Mobile.Phone.Usage)
+df$Mobile.Phone.Usage[is.na(df$Mobile.Phone.Usage)]=mean(df$Mobile.Phone.Usage,trim=2*perc_out(na.omit(df$Mobile.Phone.Usage)),na.rm = TRUE)
+ggplot(df, aes(x=Mobile.Phone.Usage)) +  geom_density()
+
+```
+
+```{r}
+
+boxplot(df$Population.0.14)
+df$Population.0.14[is.na(df$Population.0.14)]=mean(df$Population.0.14,trim=2*perc_out(na.omit(df$Population.0.14)),na.rm = TRUE)
+ggplot(df, aes(x=Population.0.14)) +  geom_density()
+
+
+```
+
+```{r}
+
+boxplot(df$Population.15.64)
+df$Population.15.64[is.na(df$Population.15.64)]=mean(df$Population.15.64,trim=2*perc_out(na.omit(df$Population.15.64)),na.rm = TRUE)
+ggplot(df, aes(x=Population.15.64)) +  geom_density()
+
+
+```
+
+
+```{r}
+
+boxplot(df$Population.65.)
+df$Population.65.[is.na(df$Population.65.)]=mean(df$Population.65.,trim=2*perc_out(na.omit(df$Population.65.)),na.rm = TRUE)
+ggplot(df, aes(x=Population.65.)) +  geom_density()
+
+df$Population.65.=df$Population.65.**0.33
+
+```
+
+```{r}
+
+boxplot(df$Population.Urban)
+df$Population.Urban[is.na(df$Population.Urban)]=mean(df$Population.Urban,trim=2*perc_out(na.omit(df$Population.Urban)),na.rm = TRUE)
+ggplot(df, aes(x=Population.Urban)) +  geom_density()
+
+
+```
+
+
+```{r}
+x=data.frame(scale(df[,1:16]))
+y=df[,18]
+```
+
+```{r}
+#Finding optimal number of clusters
+fviz_nbclust(x,kmeans,method="wss")
+fviz_nbclust(df[,1:3],kmeans,method="silhouette")
+```
+```{r}
+#apply Kmeans
+km=kmeans(x,2,nstart=20)
+df$class_k=km$cluster
+
+#Apply heirarchical clustering
+hc.single=hclust(dist(x),method="centroid")
+plot(hc.single)
+df$class_h=cutree(hc.single,7)
+```
+
+```{r}
+sil_k <- silhouette(df$class_k, dist(x))
+plot(sil_k, main ="Silhouette plot - K-means")
+sil_h<- silhouette(df$class_h, dist(x))
+plot(sil_h, main ="Silhouette plot - hierarchical-means")
+
+```
+```{r}
+#Filling summary
+compare=data.frame(matrix(ncol = 3, nrow = 0))
+names(compare)=c("Parameter","Kmeans","hierarchical")
+
+compare=rbind(compare,c("Silhoutte",mean(sil_k[,3]),mean(sil_h[,3])))
+```
+
+```{r}
+#Find Dunn index to make sure they have been clustered well
+library(fpc)
+k_stats <- cluster.stats(dist(x),  df$class_k)
+h_stats <- cluster.stats(dist(x),  df$class_h)
+
+compare=rbind(compare,c("Dunn index",k_stats$dunn,h_stats$dunn))
+
+```
+```{r}
+names(compare)=c("Parameter","Kmeans","hierarchical")
+
+print(compare)
+#It is clear that Kmeans performed well tha Heirarchical method since silhoutte index and dunn index is more than the other
+```
+```{r}
+#Comparing Health expense capita and GDP
+plot_ly(df, x = ~Health.Exp.Capita, y = ~GDP,  color = ~as.factor(class_k))
+#From the graph it is clear that countries lying on 1st and 4th quarants are considered as a group 
+```
+```{r}
+#Comparing Infant.Mortality.Rate and GDP
+plot_ly(df, x = ~Infant.Mortality.Rate, y = ~GDP,  color = ~as.factor(class_k))
+#From the graph it is clear that countries lying on 1st and 4th quarants are considered as a group 
+```
+```{r}
+#Comparing Health.Exp.Capita ,ï..Birth.Rate,Health.Exp...GDP
+
+plot_ly(df, x = ~Health.Exp...GDP, y = ~Health.Exp.Capita, z=df$ï..Birth.Rate, color = ~as.factor(class_k))
+#From the graph it is clear that countries lying on 1st and 4th quarants are considered as a group
+```
+
+
+```{r}
+names(df)
+```
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
